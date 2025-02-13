@@ -5,7 +5,8 @@ from pathlib import Path
 from PIL import Image
 import filetype
 
-db_path = "file_metadata.db"
+db_path = "photo_metadata.db"
+STARTING_FOLDER = "D:/picsbackup/"  # Set your default folder here
 
 def create_db():
     conn = sqlite3.connect(db_path)
@@ -38,10 +39,11 @@ def get_file_mime(file_path):
     kind = filetype.guess(file_path)
     return kind.mime if kind else "unknown"
 
-def scan_directory(directory):
+def scan_directory(directory, file_limit=0):
     conn = sqlite3.connect(db_path)
     c = conn.cursor()
     
+    files_processed = 0
     for root, _, files in os.walk(directory):
         for file in files:
             file_path = os.path.join(root, file)
@@ -52,6 +54,12 @@ def scan_directory(directory):
             try:
                 c.execute("INSERT OR IGNORE INTO files (name, size, path, hash, mime) VALUES (?, ?, ?, ?, ?)",
                           (file, size, file_path, file_hash, mime))
+                files_processed += 1
+                if file_limit and files_processed >= file_limit:
+                    print(f"Reached file limit of {file_limit}")
+                    conn.commit()
+                    conn.close()
+                    return
             except Exception as e:
                 print(f"DB Error: {e}")
     
@@ -92,9 +100,9 @@ def find_near_duplicates():
     conn.close()
 
 if __name__ == "__main__":
-    base_directory = input("Enter the directory to scan: ")
-    base_directory = Path(base_directory).resolve()
+    user_input = input(f"Enter the directory to scan (Press Enter to use default: {STARTING_FOLDER}): ")
+    base_directory = Path(user_input.strip() or STARTING_FOLDER).resolve()
     create_db()
-    scan_directory(base_directory)
+    scan_directory(base_directory, file_limit=10)  # Set to 10 for testing
     find_duplicates()
     find_near_duplicates()
