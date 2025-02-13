@@ -31,3 +31,5 @@ else
 fi
 
 echo "Setup complete."
+
+source "$VENV_DIR/bin/activate"
