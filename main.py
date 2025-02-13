@@ -6,7 +6,8 @@ from pathlib import Path
 import filetype
 
 db_path = "photo_metadata.db"
-STARTING_FOLDER = "D:/picsbackup/"  # Set your default folder here
+# WSL path to Windows D: drive
+STARTING_FOLDER = "/mnt/d/picsbackup"
 
 def create_db():
     print("Creating/connecting to database...")
@@ -142,13 +143,18 @@ def find_near_duplicates():
 if __name__ == "__main__":
     print("=== Photo Metadata Scanner ===")
     print("Script starting...")
-    base_directory = Path(STARTING_FOLDER)  # Remove .resolve() here
+    base_directory = Path(STARTING_FOLDER)
     print(f"Using directory: {base_directory}")
-    print(f"Directory exists: {base_directory.exists()}")
-    print(f"Directory is directory: {base_directory.is_dir()}")
     
+    if not base_directory.exists():
+        print(f"ERROR: Directory does not exist: {base_directory}")
+        exit(1)
+    if not base_directory.is_dir():
+        print(f"ERROR: Path exists but is not a directory: {base_directory}")
+        exit(1)
+        
     create_db()
-    scan_directory(base_directory, file_limit=10)  # Set to 10 for testing
+    scan_directory(base_directory, file_limit=10)
     find_duplicates()
     find_near_duplicates()
     
